@@ -1,0 +1,4 @@
+trouver la catégorie des globules rouges :
+	- prendre 1000 pixels aléatoires au centre de l'image et trouver les 100 points les plus foncés => trouver la catégorie la plus représentée
+multithreads sur le kmeans :
+	- lancer un thread pour chaque split
