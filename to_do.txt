@@ -7,5 +7,4 @@ présentation .ppt
 intégration du modèle entraîné Yolo pour segmentation globules rouges
 extraire boxes 
 
-recup boxes yolo + nms 
 évaluation quanti comparant yolo / segmentation simple (watershed) avec nms pour les deux

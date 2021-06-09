@@ -16,8 +16,10 @@ from utils.general import (
     check_img_size, non_max_suppression, apply_classifier, plot_one_box, scale_coords, xyxy2xywh, strip_optimizer)
 from utils.torch_utils import select_device, load_classifier, time_synchronized
 
+from pprint import pprint
 
-def detect(save_img=False):
+def detect_model(opt, save_img=False, print_msg=True):
+    boxes = list()
     out, source, weights, view_img, save_txt, imgsz = \
         opt.output, opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size
     webcam = source == '0' or source.startswith('rtsp') or source.startswith('http') or source.endswith('.txt')
@@ -110,11 +112,12 @@ def detect(save_img=False):
                         label = '%s %.2f' % (names[int(cls)], conf)
                         plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=1)
                         
-                        # x1, y1, x2, y2 = int(xyxy[0]), int(xyxy[1]), int(xyxy[2]), int(xyxy[3])
-                        # cv2.rectangle(im0,(x1, y1),(x2, y2),colors[int(cls)],1)
+                        x1, y1, x2, y2 = int(xyxy[0]), int(xyxy[1]), int(xyxy[2]), int(xyxy[3])
+                        boxes.append([x1, y1, x2, y2])
 
             # Print time (inference + NMS)
-            print('%sDone. (%.3fs)' % (s, t2 - t1))
+            if print_msg : 
+                print('%sDone. (%.3fs)' % (s, t2 - t1))
 
             # Stream results
             if view_img:
@@ -138,14 +141,14 @@ def detect(save_img=False):
                         h = int(vid_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
                         vid_writer = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*fourcc), fps, (w, h))
                     vid_writer.write(im0)
-
     if save_txt or save_img:
-        print('Results saved to %s' % Path(out))
+        if print_msg : 
+            print('Results saved to %s' % Path(out))
         if platform == 'darwin' and not opt.update:  # MacOS
             os.system('open ' + save_path)
-
-    print('Done. (%.3fs)' % (time.time() - t0))
-
+    if print_msg : 
+        print('Done. (%.3fs)' % (time.time() - t0))
+    return boxes
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -162,13 +165,14 @@ if __name__ == '__main__':
     parser.add_argument('--agnostic-nms', action='store_true', help='class-agnostic NMS')
     parser.add_argument('--augment', action='store_true', help='augmented inference')
     parser.add_argument('--update', action='store_true', help='update all models')
-    opt = parser.parse_args()
-    print(opt)
+    options = parser.parse_args()
+    # print("\n OPTIONS : \n")
+    # print(options)
 
     with torch.no_grad():
-        if opt.update:  # update all models (to fix SourceChangeWarning)
-            for opt.weights in ['yolov5s.pt', 'yolov5m.pt', 'yolov5l.pt', 'yolov5x.pt']:
-                detect()
-                strip_optimizer(opt.weights)
+        if options.update:  # update all models (to fix SourceChangeWarning)
+            for options.weights in ['yolov5s.pt', 'yolov5m.pt', 'yolov5l.pt', 'yolov5x.pt']:
+                detect_model()
+                strip_optimizer(options.weights)
         else:
-            detect()
+            detect_model(opt = options)
