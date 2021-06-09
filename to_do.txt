@@ -8,3 +8,4 @@ intégration du modèle entraîné Yolo pour segmentation globules rouges
 extraire boxes 
 
 évaluation quanti comparant yolo / segmentation simple (watershed) avec nms pour les deux
+save all segmented full img

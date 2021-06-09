@@ -296,7 +296,7 @@ def get_boxes_contour(splits, splits_original) :
             boxes.append([int(x1), int(y1), int(x1) + w, int(y1) + h])  
         #save segmented split
         seg = draw_boxes(copy.deepcopy(splits_original[s]), boxes_split)
-        cv2.imwrite('3_segmented/' + 'contour_split_' + str(s + 1) + '.png', seg)
+        cv2.imwrite('3_segmented/' + img_name + '_contour_split_' + str(s + 1) + '.png', seg)
     return boxes
 #----------------------------------------------------------------------------------------------------
 # Function :        draw_boxes
@@ -312,7 +312,7 @@ def draw_boxes(img, boxes) :
 def save_splits(splits, path) :
     splits_path = list()
     for s in range(len(splits)) :
-        splits_path.append(path + 'split_' + str(s + 1) + '.png')
+        splits_path.append(path + img_name + '_split_' + str(s + 1) + '.png')
         cv2.imwrite(splits_path[-1], splits[s])
     return splits_path
 
@@ -345,14 +345,14 @@ def get_boxes_model(splits_path, splits) :
             boxes.append([int(x1), int(y1), int(x1) + w, int(y1) + h])
         #save segmented split
         seg = draw_boxes(copy.deepcopy(splits[s]), boxes_split)
-        cv2.imwrite('3_segmented/' + 'model_split_' + str(s + 1) + '.png', seg)
+        cv2.imwrite('3_segmented/' + img_name + '_model_split_' + str(s + 1) + '.png', seg)
     return boxes
 
 def save_boxes(img, boxes, method_name) :
     for b in range(len(boxes)) :
         # extract = img[boxes[b][0] : boxes[b][2] + 1, boxes[b][1] : boxes[b][3] + 1]
         extract = img[boxes[b][1] : boxes[b][3] + 1, boxes[b][0] : boxes[b][2] + 1]
-        cv2.imwrite('4_boxes/' + method_name + '_' + str(b + 1) + '.png', extract)
+        cv2.imwrite('4_boxes/' + img_name + '_' + method_name + '_' + str(b + 1) + '.png', extract)
         
 def empty_folder(folder_paths) :
     for folder_path in folder_paths :
@@ -363,13 +363,14 @@ def empty_folder(folder_paths) :
 #####################################################################################################
 # EXECUTION                                    
 #####################################################################################################
-empty_folder(['2_splits', '3_segmented', '4_boxes'])
+# empty_folder(['2_splits', , '4_boxes'])
 
 print("\n------------------IMAGE SELECTION & SPLIT------------------")
 #Selection of image
 print("SELECTION OF IMAGE :")
 imgs = select_img()
 img_file, img, img_w, window_size, margin = imgs[0], imgs[1], imgs[2], imgs[3], imgs[4]
+img_name = img_file[img_file.rfind('/') + 1 : -4]
 print_img(img, "Source")
 print("     ", img_file)
 #Split of image
@@ -409,7 +410,7 @@ print("     ", "TEMPS EXECUTION : %s secondes" % (end_time_step - start_time_ste
 print("\nDRAW BOXES :")
 start_time_step = time.time()
 merged = draw_boxes(copy.deepcopy(img), boxes)
-cv2.imwrite('3_segmented/contour.png', merged)
+cv2.imwrite('3_segmented/' + img_name + '_contour.png', merged)
 print_img(merged, "Segmented by Contour Detection")
 end_time_step = time.time()
 print("     ", "TEMPS EXECUTION : %s secondes" % (end_time_step - start_time_step))
@@ -446,7 +447,7 @@ print("\nDRAW BOXES :")
 start_time_step = time.time()
 merged = draw_boxes(copy.deepcopy(img), boxes)
 print_img(merged, "Segmented by Model")
-cv2.imwrite('3_segmented/model.png', merged)
+cv2.imwrite('3_segmented/' + img_name + '_model.png', merged)
 end_time_step = time.time()
 print("     ", "TEMPS EXECUTION : %s secondes" % (end_time_step - start_time_step))
 #-----End Timer
