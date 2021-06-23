@@ -115,8 +115,9 @@ def detect_contour(img) :
                        cv2.CHAIN_APPROX_SIMPLE)[-2]
         c = max(cnts, key=cv2.contourArea)        
         x, y, w, h = cv2.boundingRect(c)
-        cv2.rectangle(gray, (x, y), (x + w, y + h), (200, 0, 100), 2)
-        rects.append([x, y, x + w, y + h])
+        if w > 29 and w < 61 and h > 29 and h < 61 :
+            cv2.rectangle(gray, (x, y), (x + w, y + h), (200, 0, 100), 2)
+            rects.append([x, y, x + w, y + h])
     return rects
 
 #----------------------------------------------------------------------------------------------------
@@ -256,7 +257,7 @@ def print_split(splits, title) :
 # Function :        get_boxes_contour
 # Role :            Segment red blood cells by contour detection
 #----------------------------------------------------------------------------------------------------
-def get_boxes_contour(splits, splits_original) :
+def get_boxes_contour(splits, splits_original, window_size, margin, img_name) :
     boxes = list()
     for s in range(len(splits)) :
         split = splits[s]
@@ -293,7 +294,8 @@ def get_boxes_contour(splits, splits_original) :
             w, h = x2 - x1, y2 - y1
             x1 += col * window_size - margin
             y1 += row * window_size - margin
-            boxes.append([int(x1), int(y1), int(x1) + w, int(y1) + h])  
+            if w > 29 and w < 61 and h > 29 and h < 61 :
+                boxes.append([int(x1), int(y1), int(x1) + w, int(y1) + h])  
         #save segmented split
         seg = draw_boxes(copy.deepcopy(splits_original[s]), boxes_split)
         cv2.imwrite('3_segmented/' + img_name + '_contour_split_' + str(s + 1) + '.png', seg)
@@ -305,11 +307,11 @@ def get_boxes_contour(splits, splits_original) :
 def draw_boxes(img, boxes) :
     for box in boxes :
         x1, y1, x2, y2 = box[0], box[1], box[2], box[3]
-        if x2 - x1 > 29 and x2 - x1 < 100 and y2 - y1 > 29 and y2 - y1 < 100 :
-            cv2.rectangle(img, (x1, y1), (x2, y2), (0, 0, 255), 2)
+        # if x2 - x1 > 29 and x2 - x1 < 100 and y2 - y1 > 29 and y2 - y1 < 100 :
+        cv2.rectangle(img, (x1, y1), (x2, y2), (0, 0, 255), 2)
     return img    
 
-def save_splits(splits, path) :
+def save_splits(splits, path, img_name) :
     splits_path = list()
     for s in range(len(splits)) :
         splits_path.append(path + img_name + '_split_' + str(s + 1) + '.png')
@@ -330,7 +332,7 @@ def define_options(split_path) :
                     update=False, 
                     view_img=False, 
                     weights=['best_BCCM.pt'])
-def get_boxes_model(splits_path, splits) :
+def get_boxes_model(splits_path, splits, window_size, margin, img_name) :
     boxes = list()
     boxes_split = list()
     for s in range(len(splits_path)) :
@@ -342,17 +344,18 @@ def get_boxes_model(splits_path, splits) :
             w, h = x2 - x1, y2 - y1
             x1 += col * window_size - margin
             y1 += row * window_size - margin
-            boxes.append([int(x1), int(y1), int(x1) + w, int(y1) + h])
+            if w > 29 and w < 101 and h > 29 and h < 101 :
+                boxes.append([int(x1), int(y1), int(x1) + w, int(y1) + h])
         #save segmented split
         seg = draw_boxes(copy.deepcopy(splits[s]), boxes_split)
         cv2.imwrite('3_segmented/' + img_name + '_model_split_' + str(s + 1) + '.png', seg)
     return boxes
 
-def save_boxes(img, boxes, method_name) :
+def save_boxes(img, boxes, method_name, img_name) :
     for b in range(len(boxes)) :
         # extract = img[boxes[b][0] : boxes[b][2] + 1, boxes[b][1] : boxes[b][3] + 1]
         extract = img[boxes[b][1] : boxes[b][3] + 1, boxes[b][0] : boxes[b][2] + 1]
-        cv2.imwrite('4_boxes/' + img_name + '_' + method_name + '_' + str(b + 1) + '.png', extract)
+        cv2.imwrite('4_boxes/' + method_name + '_' + img_name + '_' + str(b + 1) + '.png', extract)
         
 def empty_folder(folder_paths) :
     for folder_path in folder_paths :
@@ -360,96 +363,103 @@ def empty_folder(folder_paths) :
         for f in files:
             os.remove(f)
         
-#####################################################################################################
-# EXECUTION                                    
-#####################################################################################################
-# empty_folder(['2_splits', , '4_boxes'])
+# #####################################################################################################
+# # EXECUTION                                    
+# #####################################################################################################
+# # empty_folder(['2_splits', '3_segmented', '4_boxes'])
 
-print("\n------------------IMAGE SELECTION & SPLIT------------------")
-#Selection of image
-print("SELECTION OF IMAGE :")
-imgs = select_img()
-img_file, img, img_w, window_size, margin = imgs[0], imgs[1], imgs[2], imgs[3], imgs[4]
-img_name = img_file[img_file.rfind('/') + 1 : -4]
-print_img(img, "Source")
-print("     ", img_file)
-#Split of image
-print("\nSPLIT OF IMAGE :")
-start_time_step = time.time()
-splits = split_image(img, window_size, margin)
-print_split(splits, "Splitted")
-end_time_step = time.time()
-print("     ", "TEMPS EXECUTION : %s secondes" % (end_time_step - start_time_step))
+# print("\n------------------IMAGE SELECTION & SPLIT------------------")
+# #Selection of image
+# print("SELECTION OF IMAGE :")
+# imgs = select_img()
+# img_file, img, img_w, window_size, margin = imgs[0], imgs[1], imgs[2], imgs[3], imgs[4]
+# img_name = img_file[img_file.rfind('/') + 1 : -4]
+# print_img(img, "Source")
+# print("     ", img_file)
+# #Split of image
+# print("\nSPLIT OF IMAGE :")
+# start_time_step = time.time()
+# splits = split_image(img, window_size, margin)
+# print_split(splits, "Splitted")
+# end_time_step = time.time()
+# print("     ", "TEMPS EXECUTION : %s secondes" % (end_time_step - start_time_step))
 
-#Segmentation by contour detection
-print("\n------------------SEGMENTATION BY CONTOUR DETECTION------------------")
-#-----Start Timer
-start_time = time.time()
-#-----Segmentation of red blood cells
-print("SEGMENTATION OF RED BLOOD CELLS :")
-start_time_step = time.time()
-splits_1 = copy.deepcopy(splits)
-boxes = get_boxes_contour(splits_1, splits)
-print("     ", "Number of boxes before NMS :", len(boxes))
-end_time_step = time.time()
-print("     ", "TEMPS EXECUTION : %s secondes" % (end_time_step - start_time_step))
-#-----Elimination of duplicate segmentations
-print("\nELIMINATION OF DUPLICATE SEGMENTATIONS :")
-start_time_step = time.time()
-boxes = list(nms(np.array(boxes), 0.46))
-print("     ", "Number of boxes after NMS :", len(boxes))
-end_time_step = time.time()
-print("     ", "TEMPS EXECUTION : %s secondes" % (end_time_step - start_time_step))
-#-----Save boxes
-print("\nSAVE BOXES :")
-start_time_step = time.time()
-save_boxes(copy.deepcopy(img), boxes, 'contour')
-end_time_step = time.time()
-print("     ", "TEMPS EXECUTION : %s secondes" % (end_time_step - start_time_step))
-#-----Draw boxes
-print("\nDRAW BOXES :")
-start_time_step = time.time()
-merged = draw_boxes(copy.deepcopy(img), boxes)
-cv2.imwrite('3_segmented/' + img_name + '_contour.png', merged)
-print_img(merged, "Segmented by Contour Detection")
-end_time_step = time.time()
-print("     ", "TEMPS EXECUTION : %s secondes" % (end_time_step - start_time_step))
-#-----End Timer
-end_time = time.time()
-print("\nTEMPS EXECUTION CONTOUR DETECTION : %s secondes" % (end_time - start_time))
+# #Segmentation by contour detection
+# print("\n------------------SEGMENTATION BY CONTOUR DETECTION------------------")
+# #-----Start Timer
+# start_time = time.time()
+# #-----Segmentation of red blood cells
+# print("SEGMENTATION OF RED BLOOD CELLS :")
+# start_time_step = time.time()
+# splits_1 = copy.deepcopy(splits)
+# boxes = get_boxes_contour(splits_1, splits, window_size, margin, img_name)
+# print("     ", "Number of boxes before NMS :", len(boxes))
+# end_time_step = time.time()
+# print("     ", "TEMPS EXECUTION : %s secondes" % (end_time_step - start_time_step))
+# #-----Elimination of duplicate segmentations
+# print("\nELIMINATION OF DUPLICATE SEGMENTATIONS :")
+# start_time_step = time.time()
+# boxes = list(nms(np.array(boxes), 0.46))
+# print("     ", "Number of boxes after NMS :", len(boxes))
+# end_time_step = time.time()
+# print("     ", "TEMPS EXECUTION : %s secondes" % (end_time_step - start_time_step))
+# #-----Save boxes
+# print("\nSAVE BOXES :")
+# start_time_step = time.time()
+# save_boxes(copy.deepcopy(img), boxes, 'contour', img_name)
+# end_time_step = time.time()
+# print("     ", "TEMPS EXECUTION : %s secondes" % (end_time_step - start_time_step))
+# #-----Draw boxes
+# print("\nDRAW BOXES :")
+# start_time_step = time.time()
+# merged = draw_boxes(copy.deepcopy(img), boxes)
+# cv2.imwrite('3_segmented/' + img_name + '_contour.png', merged)
+# print_img(merged, "Segmented by Contour Detection")
+# end_time_step = time.time()
+# print("     ", "TEMPS EXECUTION : %s secondes" % (end_time_step - start_time_step))
+# #-----End Timer
+# end_time = time.time()
+# print("\nTEMPS EXECUTION CONTOUR DETECTION : %s secondes" % (end_time - start_time))
 
-#Segmentation by contour detection
-print("\n------------------SEGMENTATION BY YOLO TRAINED MODEL------------------")
-#-----Start Timer
-start_time = time.time()
-#-----Saving splits
-print("\nSAVING SPLITS :")
-start_time_step = time.time()
-splits_2 = copy.deepcopy(splits)
-splits_path = save_splits(splits, '2_splits/')
-print("     ", "TEMPS EXECUTION : %s secondes" % (end_time_step - start_time_step))
-# pprint(splits_path)
-#-----Segmentation of red blood cells
-start_time_step = time.time()
-boxes = get_boxes_model(splits_path, splits_2)
-print("\n\nSEGMENTATION OF RED BLOOD CELLS :")
-print("     ", "Number of boxes after NMS :", len(boxes))
-end_time_step = time.time()
-print("     ", "TEMPS EXECUTION : %s secondes" % (end_time_step - start_time_step))
-#-----Save boxes
-print("\nSAVE BOXES :")
-start_time_step = time.time()
-save_boxes(copy.deepcopy(img), boxes, 'model')
-end_time_step = time.time()
-print("     ", "TEMPS EXECUTION : %s secondes" % (end_time_step - start_time_step))
-#-----Draw boxes
-print("\nDRAW BOXES :")
-start_time_step = time.time()
-merged = draw_boxes(copy.deepcopy(img), boxes)
-print_img(merged, "Segmented by Model")
-cv2.imwrite('3_segmented/' + img_name + '_model.png', merged)
-end_time_step = time.time()
-print("     ", "TEMPS EXECUTION : %s secondes" % (end_time_step - start_time_step))
-#-----End Timer
-end_time = time.time()
-print("\nTEMPS EXECUTION MODEL : %s secondes" % (end_time - start_time))
+# #Segmentation by contour detection
+# print("\n------------------SEGMENTATION BY YOLO TRAINED MODEL------------------")
+# #-----Start Timer
+# start_time = time.time()
+# #-----Saving splits
+# print("\nSAVING SPLITS :")
+# start_time_step = time.time()
+# splits_2 = copy.deepcopy(splits)
+# splits_path = save_splits(splits, '2_splits/', img_name)
+# print("     ", "TEMPS EXECUTION : %s secondes" % (end_time_step - start_time_step))
+# # pprint(splits_path)
+# #-----Segmentation of red blood cells
+# start_time_step = time.time()
+# boxes = get_boxes_model(splits_path, splits_2, window_size, margin, img_name)
+# print("\n\nSEGMENTATION OF RED BLOOD CELLS :")
+# print("     ", "Number of boxes after NMS :", len(boxes))
+# end_time_step = time.time()
+# print("     ", "TEMPS EXECUTION : %s secondes" % (end_time_step - start_time_step))
+# #-----Elimination of duplicate segmentations
+# print("\nELIMINATION OF DUPLICATE SEGMENTATIONS :")
+# start_time_step = time.time()
+# boxes = list(nms(np.array(boxes), 0.46))
+# print("     ", "Number of boxes after NMS :", len(boxes))
+# end_time_step = time.time()
+# print("     ", "TEMPS EXECUTION : %s secondes" % (end_time_step - start_time_step))
+# #-----Save boxes
+# print("\nSAVE BOXES :")
+# start_time_step = time.time()
+# save_boxes(copy.deepcopy(img), boxes, 'model', img_name)
+# end_time_step = time.time()
+# print("     ", "TEMPS EXECUTION : %s secondes" % (end_time_step - start_time_step))
+# #-----Draw boxes
+# print("\nDRAW BOXES :")
+# start_time_step = time.time()
+# merged = draw_boxes(copy.deepcopy(img), boxes)
+# print_img(merged, "Segmented by Model")
+# cv2.imwrite('3_segmented/' + img_name + '_model.png', merged)
+# end_time_step = time.time()
+# print("     ", "TEMPS EXECUTION : %s secondes" % (end_time_step - start_time_step))
+# #-----End Timer
+# end_time = time.time()
+# print("\nTEMPS EXECUTION MODEL : %s secondes" % (end_time - start_time))

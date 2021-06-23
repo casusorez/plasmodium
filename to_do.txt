@@ -9,3 +9,16 @@ extraire boxes
 
 évaluation quanti comparant yolo / segmentation simple (watershed) avec nms pour les deux
 save all segmented full img
+
+enlever nms sur split YOLO
+renommer images en supprimant image 2 en doublon + refaire toutes les simulations
+remettre seuil min / max pour enlever boxes trop petites / grandes de contour detection
+récupérer les 30 images (les premières étaient sur la clef usb a priori.. les secondes sur le mail)
+mettre à jour slides
+zipper toutes les hematies
+tester modele notebook sur toutes les hématies
+
+1 : mixer whatershed + yolo => fusionner les boxes => cela donne la base d'entrainement
+2 : entrainer le modèle YOLO sur les 30 * 16 = 480 splits segmentés
+2 parallèle : tester le modèle notebook sur les boxes de 1
+3 : tester le nouveau modèle YOLO pour segmenter les boxes
