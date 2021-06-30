@@ -36,7 +36,7 @@ warnings.filterwarnings("ignore")
 # FILE SELECTION
 #----------------------------------------------------------------------------------------------------
 import tkinter
-from tkinter.filedialog import askopenfilename
+from tkinter.filedialog import askopenfilename, askopenfilenames
 from tkinter import filedialog
 #----------------------------------------------------------------------------------------------------
 # IMAGE PROCESSING
@@ -115,7 +115,7 @@ def detect_contour(img) :
                        cv2.CHAIN_APPROX_SIMPLE)[-2]
         c = max(cnts, key=cv2.contourArea)        
         x, y, w, h = cv2.boundingRect(c)
-        if w > 29 and w < 61 and h > 29 and h < 61 :
+        if w > 19 and w < 61 and h > 19 and h < 61 :
             cv2.rectangle(gray, (x, y), (x + w, y + h), (200, 0, 100), 2)
             rects.append([x, y, x + w, y + h])
     return rects
@@ -212,21 +212,23 @@ def nms(boxes, overlapThresh):
 	# integer data type
     return boxes[pick].astype("int")
 #----------------------------------------------------------------------------------------------------
-# Function :        select_img
-# Role :            Selection of an image
+# Function :        select_imgs
+# Role :            Selection of multiple images
 #----------------------------------------------------------------------------------------------------
-def select_img() -> filedialog.Open:
+def select_imgs() -> filedialog.Open:
     root = tkinter.Tk()
     root.withdraw()
     root.wm_attributes('-topmost', 1)
-    img_file = askopenfilename(parent=root)
+    img_files = askopenfilenames(parent=root)
     root.destroy
-    
-    img = cv2.imread(img_file)
-    img_w = img.shape[0]
-    window_size = int(img_w / 4)
-    margin = 40
-    return [img_file, img, img_w, window_size, margin]
+    imgs = list()
+    for img_file in img_files :
+        img = cv2.imread(img_file)
+        img_w = img.shape[0]
+        window_size = int(img_w / 4)
+        margin = 40
+        imgs.append([img_file, img, img_w, window_size, margin])
+    return imgs
 #----------------------------------------------------------------------------------------------------
 # Function :        print_img
 # Role :            Print of an image
@@ -294,11 +296,11 @@ def get_boxes_contour(splits, splits_original, window_size, margin, img_name) :
             w, h = x2 - x1, y2 - y1
             x1 += col * window_size - margin
             y1 += row * window_size - margin
-            if w > 29 and w < 61 and h > 29 and h < 61 :
+            if w > 19 and w < 61 and h > 19 and h < 61 :
                 boxes.append([int(x1), int(y1), int(x1) + w, int(y1) + h])  
         #save segmented split
         seg = draw_boxes(copy.deepcopy(splits_original[s]), boxes_split)
-        cv2.imwrite('3_segmented/' + img_name + '_contour_split_' + str(s + 1) + '.png', seg)
+        cv2.imwrite('results/segmented/' + img_name + '_contour_' + str(s + 1) + '.jpg', seg)
     return boxes
 #----------------------------------------------------------------------------------------------------
 # Function :        draw_boxes
@@ -314,7 +316,7 @@ def draw_boxes(img, boxes) :
 def save_splits(splits, path, img_name) :
     splits_path = list()
     for s in range(len(splits)) :
-        splits_path.append(path + img_name + '_split_' + str(s + 1) + '.png')
+        splits_path.append(path + img_name + '_' + str(s + 1) + '.jpg')
         cv2.imwrite(splits_path[-1], splits[s])
     return splits_path
 
@@ -348,14 +350,23 @@ def get_boxes_model(splits_path, splits, window_size, margin, img_name) :
                 boxes.append([int(x1), int(y1), int(x1) + w, int(y1) + h])
         #save segmented split
         seg = draw_boxes(copy.deepcopy(splits[s]), boxes_split)
-        cv2.imwrite('3_segmented/' + img_name + '_model_split_' + str(s + 1) + '.png', seg)
+        cv2.imwrite('results/segmented/' + img_name + '_model_' + str(s + 1) + '.jpg', seg)
     return boxes
+
+def clean_boxes(boxes) :
+    clean = list()
+    for box in boxes :
+        if box[0] >= 0 and box[1] >= 0 and box[2] >= 0 and box[3] >= 0 \
+        and box[2] >= box[0] and box[3] >= box[1] :
+            clean.append(box)
+    return clean
 
 def save_boxes(img, boxes, method_name, img_name) :
     for b in range(len(boxes)) :
+        # print(boxes[b])
         # extract = img[boxes[b][0] : boxes[b][2] + 1, boxes[b][1] : boxes[b][3] + 1]
         extract = img[boxes[b][1] : boxes[b][3] + 1, boxes[b][0] : boxes[b][2] + 1]
-        cv2.imwrite('4_boxes/' + method_name + '_' + img_name + '_' + str(b + 1) + '.png', extract)
+        cv2.imwrite('results/boxes/' + img_name + '_' + str(b + 1) + '.jpg', extract)
         
 def empty_folder(folder_paths) :
     for folder_path in folder_paths :
@@ -413,7 +424,7 @@ def empty_folder(folder_paths) :
 # print("\nDRAW BOXES :")
 # start_time_step = time.time()
 # merged = draw_boxes(copy.deepcopy(img), boxes)
-# cv2.imwrite('3_segmented/' + img_name + '_contour.png', merged)
+# cv2.imwrite('results/segmented/' + img_name + '_contour.jpg', merged)
 # print_img(merged, "Segmented by Contour Detection")
 # end_time_step = time.time()
 # print("     ", "TEMPS EXECUTION : %s secondes" % (end_time_step - start_time_step))
@@ -457,7 +468,7 @@ def empty_folder(folder_paths) :
 # start_time_step = time.time()
 # merged = draw_boxes(copy.deepcopy(img), boxes)
 # print_img(merged, "Segmented by Model")
-# cv2.imwrite('3_segmented/' + img_name + '_model.png', merged)
+# cv2.imwrite('results/segmented/' + img_name + '_model.jpg', merged)
 # end_time_step = time.time()
 # print("     ", "TEMPS EXECUTION : %s secondes" % (end_time_step - start_time_step))
 # #-----End Timer

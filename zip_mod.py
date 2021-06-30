@@ -25,28 +25,35 @@ def zip_folder(zip_path, folder_path, delete_files = False) :
 def list_files(folder_path) :
     return [folder_path + f for f in listdir(folder_path) if isfile(join(folder_path, f))]
 
-def histo_results(wb_path, img_name, nb, method) :
-    now = datetime.now()
-    now_str = now.strftime("%d/%m/%Y %H:%M:%S")
+def histo_results(wb_path, img_name, now_str, nb_contour, nb_model, nb_combined) :
     wb = openpyxl.load_workbook(filename = wb_path)
     ws = wb['histo']
     last_r = ws.max_row
     last_c = ws.max_column
     for c in range(2, last_c + 3) :
-        if ws.cell(1, c).value == None :
+        if ws.cell(2, c).value == None :
             last_c = c
             break
+    myc = last_c
+    for c in range(2, last_c + 3) :
+        if ws.cell(1, c).value == now_str :
+            myc = c
+            break
+    ws.cell(1, myc).value = now_str
+    ws.cell(2, myc).value = 'Contour'
+    ws.cell(2, myc + 1).value = 'Model'
+    ws.cell(2, myc + 2).value = 'Combined'
     for r in range(3, last_r + 3) :
         if ws.cell(r, 1).value == img_name :
-            ws.cell(1, last_c).value = method
-            ws.cell(2, last_c).value = now_str
-            ws.cell(r, last_c).value = nb
+            ws.cell(r, myc).value = nb_contour
+            ws.cell(r, myc + 1).value = nb_model
+            ws.cell(r, myc + 2).value = nb_combined
             break
         elif ws.cell(r, 1).value == None :
-            ws.cell(1, last_c).value = method
-            ws.cell(2, last_c).value = now_str
-            ws.cell(r, last_c).value = nb
             ws.cell(r, 1).value = img_name
+            ws.cell(r, myc).value = nb_contour
+            ws.cell(r, myc + 1).value = nb_model
+            ws.cell(r, myc + 2).value = nb_combined
             break
     wb.save(wb_path)
     
