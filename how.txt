@@ -1,0 +1,1 @@
+python yolov5/detect.py --source image.jpg --weights 'best_BCCM.pt'
